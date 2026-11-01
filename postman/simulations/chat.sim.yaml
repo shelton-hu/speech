@@ -1,0 +1,9 @@
+simulation: speech-chat
+routing: path
+mocks:
+  - name: OpenAI
+    routeKey: openai
+    path: postman/mocks/openai/config.yaml
+  - name: Speech transport
+    routeKey: speech
+    path: postman/mocks/speech/config.yaml

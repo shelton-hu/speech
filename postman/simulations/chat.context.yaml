@@ -1,0 +1,30 @@
+purpose:
+  stands_in_for: OpenAI Responses / Chat Completions and speech HTTP transport
+  unblocks: Local gateway and browser integration without a live sub2api key
+assumptions:
+  - id: openai-text-contract
+    status: supported
+    claim: The adapter uses documented text message input and final assistant output shapes for Responses and Chat Completions.
+    reason: OpenAI text-generation documentation was read; the fixtures model only the relevant text paths. Orbit discovery returned Chat Completions; no owning workspace mock was found by the OpenAI workspace search.
+    verification: On 2026-11-01, check_chat.py ran the real uvicorn gateway and HTTP client against Postman CLI 1.74.0. Both protocols passed JSON and SSE answers, history propagation, refusal, reasoning exclusion, truncated output, 401/429/500, malformed and oversized response checks. The simulation log recorded both endpoint paths. This establishes caller behavior under these fixtures, not model quality or live provider availability.
+    source: https://developers.openai.com/api/docs/guides/text; app/llm.py; scripts/check_chat.py; postman/mocks/openai/default.js
+    updated_at: '2026-11-01'
+  - id: actual-sub2api-compatibility
+    status: supported
+    claim: On 2026-11-01 the current DSH sub2api configuration with requested model gpt-6-sol accepted Responses with store=false and the default 2048 output budget, both JSON and SSE, through the local speech gateway.
+    reason: The actual configured public sub2api endpoint was called using credentials passed only to temporary test processes. This does not establish Chat Completions support, other keys/models, future availability or the NAS public gateway.
+    verification: Previously only fixtures were tested and live compatibility was unknown. At 17:54-17:56 Asia/Shanghai on 2026-11-01, live first-turn/follow-up requests returned the expected fruit and number; Responses SSE returned its final text. Real local ASR and TTS were also exercised. An initial 二加三 audio was misrecognized as 外加三 and yielded an incorrect arithmetic interpretation; the weak test assertion was fixed, that finding retained, and a natural apples question passed with quantities preserved and answer 五个苹果. The DSH config and speech .env were not modified and the NAS was not deployed.
+    source: scripts/check_chat_live.py; artifacts/verification/live-chat/report.json; artifacts/verification/live-chat/stream-report.json; artifacts/verification/live-chat/initial-roundtrip-finding.json; RUNBOOK.md
+    updated_at: '2026-11-01'
+  - id: browser-transport-workflow
+    status: supported
+    claim: With the local fixtures, the browser supports text and recorded-file questions, bounded history, separate replay and stopping playback, and preserves answers after a TTS failure.
+    reason: A real headless Chrome session exercised the delivered page against the real gateway and Postman dependencies.
+    verification: On 2026-11-01, check_chat_browser.py passed multi-turn context, upstream error display, new conversation, file question, long-answer segmented playback, stopping, replay, TTS failure with retained text, unconfigured feedback and 390px mobile overflow checks. No page JavaScript errors occurred. A separate smoke run forwarded speech requests to the existing local Docker services and passed real TTS -> real ASR -> simulated LLM -> real TTS. The LLM remained simulated and microphone permission was not tested. Evidence summary is artifacts/verification/chat-report.json.
+    source: scripts/check_chat_browser.py; app/static/chat.js; postman/mocks/speech/default.js
+    updated_at: '2026-11-01'
+fingerprints:
+  - id: local-development-020
+    date: '2026-11-01'
+    commit: null
+    cli: '1.74.0; local speech source 0.2.0, no Git repository initialized'

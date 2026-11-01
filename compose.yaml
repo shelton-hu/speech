@@ -1,0 +1,59 @@
+name: speech
+
+x-runtime: &runtime
+  image: ${SPEECH_IMAGE:-registry.admin.dressluck.top/ranklier/speech:0.2.0}
+  platform: linux/amd64
+  init: true
+  restart: unless-stopped
+  read_only: true
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+services:
+  speech:
+    <<: *runtime
+    command: [uvicorn, 'app.speech:app', --host, 0.0.0.0, --port, '8001', --no-access-log]
+    environment:
+      APP_TOKEN: ${APP_TOKEN:?请在 .env 填写至少24字符的网页访问口令}
+      SPEECH_TOKEN: ${SPEECH_TOKEN:-}
+      INFERENCE_THREADS: ${INFERENCE_THREADS:-2}
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cpus: 2.0
+    mem_limit: 4g
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 180s
+
+  assistant:
+    <<: *runtime
+    environment:
+      APP_TOKEN: ${APP_TOKEN:?请在 .env 填写至少24字符的网页访问口令}
+      SPEECH_TOKEN: ${SPEECH_TOKEN:-}
+      SPEECH_URL: http://speech:8001
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_PROTOCOL: ${LLM_PROTOCOL:-responses}
+      LLM_STREAM: ${LLM_STREAM:-false}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-90}
+      LLM_MAX_OUTPUT_TOKENS: ${LLM_MAX_OUTPUT_TOKENS:-2048}
+    ports:
+      - '${BIND_ADDRESS:-0.0.0.0}:${APP_PORT:-18080}:8000'
+    depends_on:
+      speech:
+        condition: service_healthy
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    mem_limit: 512m
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

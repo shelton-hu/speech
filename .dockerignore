@@ -1,0 +1,14 @@
+# Build only an explicit allowlist; local credentials and test evidence never enter the context.
+*
+!Dockerfile
+!requirements.txt
+!VERSION
+!app/
+!app/**
+!models/
+!models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/
+!models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/**
+!models/vits-melo-tts-zh_en/
+!models/vits-melo-tts-zh_en/**
+**/__pycache__/
+**/*.pyc
